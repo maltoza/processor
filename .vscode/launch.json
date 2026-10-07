@@ -8,8 +8,10 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/vm/vm.exe",
-            "args": ["../code.bin"],
+            "program": "${workspaceFolder}/compilator/compilator.exe",
+            "args": [
+                "../code.asm",
+                "./code.bin"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

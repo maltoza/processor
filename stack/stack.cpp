@@ -112,11 +112,11 @@ void stack_print_err(stack_t stck, ERRORS_STCK result)
     for (size_t i = 0; i < stck.capacity; i++) {
         if (i < stck.num_elems)
         {
-            fprintf (err, "       *elem [%d]: %c\n", i, ((stck_el*)stck.buffer)[i]);
+            fprintf (err, "       *elem [%d]: %d\n", i, ((stck_el*)stck.buffer)[i]);
         }
         else
         {
-            fprintf (err, "        elem [%d]: %c\n", i, ((stck_el*)stck.buffer)[i]);            
+            fprintf (err, "        elem [%d]: %d\n", i, ((stck_el*)stck.buffer)[i]);            
         }
     }
     fprintf (err, "======================================\n\n\n");

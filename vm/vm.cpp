@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "stack.h"
+#include "code_bin.h"
 
 #define PRINT_ERROR printf("%s:%d ERROR in function %s", __FILE__, __LINE__, __FUNCTION__)
 #define NUM_ELEMS 100
@@ -19,17 +20,6 @@ enum ERROR {
 
     // ошибки выполнения команд .bin
     ERROR_CMD = 40
-};
-
-enum CMD {
-    CMD_ERROR = 0,
-    CMD_PUSH,
-    CMD_OUT,
-    CMD_HLT,
-    CMD_ADD,
-    CMD_SUB,
-    CMD_DIV,
-    CMD_MUL
 };
 
 
@@ -112,10 +102,14 @@ ERROR run_bin(const int* const buffer, const int buf_size) {
                 break;
             case CMD_OUT:
                 pop(&stck, &out);
+                printf("get from stack: %d\n", out);
                 break;
             case CMD_HLT:
+                // завершение программы
+                return OK;
                 break;
             case CMD_ADD:
+//              add(&stack);
                 break;
             case CMD_SUB:
                 break;
