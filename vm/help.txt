@@ -1,0 +1,8 @@
+1 PUSH
+2 OUT
+3 HLT
+------------
+4 ADD
+5 SUB
+6 DIV
+7 MUL

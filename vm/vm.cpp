@@ -106,7 +106,7 @@ ERROR run_bin(const int* const buffer, const int buf_size) {
                 break;
             case CMD_OUT:
                 pop(&stck, &out);
-                printf("Get from stack: %d\n", out);
+                printf("Result: %d\n", out);
                 break;
             case CMD_HLT:
                 // завершение программы

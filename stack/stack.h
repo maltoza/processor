@@ -34,7 +34,7 @@ enum ERRORS
 };
 
 // ошибки стека
-enum ERRORS_STCK // TODO ошибки + const
+enum ERRORS_STCK
 {
     ERRORS_STCK_OK = 0,     // нет ошибок
     ERRORS_STCK_NULLPTR,    // нулевой указатель на стек
@@ -63,13 +63,14 @@ struct stack_t
     canary_t          canary_stck_end;
 };
 
-ERRORS stack_init(stack_t* stck, size_t capacity);
-void stack_close(stack_t* stck);
+ERRORS stack_init(stack_t* const stck, const size_t capacity);
+void stack_close(stack_t* const stck);
 
-ERRORS pop(stack_t* stck, stck_el* out);
-ERRORS push(stack_t* stck, stck_el elem);
-ERRORS get_mem(stack_t* stck);
-ERRORS del_mem(stack_t* stck);
-ERRORS fill_poison(stack_t* stck, int start);
+ERRORS pop(stack_t* const stck, stck_el* const out);
+ERRORS push(stack_t* const stck, const stck_el elem);
+ERRORS check_memory(stack_t* const stck);
+ERRORS get_mem(stack_t* const stck);
+ERRORS del_mem(stack_t* const stck);
+ERRORS fill_poison(stack_t* const stck, const int start);
 
 #endif // STACK_H
