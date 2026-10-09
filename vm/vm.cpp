@@ -25,6 +25,10 @@ enum ERROR {
 
 ERROR read_bin(const char* const file_name, int* buffer, size_t* const buf_len);
 ERROR run_bin(const int* const buffer, const int buf_size);
+ERROR add_stck(stack_t* const stck);
+ERROR sub_stck(stack_t* const stck);
+ERROR div_stck(stack_t* const stck);
+ERROR mul_stck(stack_t* const stck);
 
 
 
@@ -102,20 +106,23 @@ ERROR run_bin(const int* const buffer, const int buf_size) {
                 break;
             case CMD_OUT:
                 pop(&stck, &out);
-                printf("get from stack: %d\n", out);
+                printf("Get from stack: %d\n", out);
                 break;
             case CMD_HLT:
                 // завершение программы
                 return OK;
                 break;
             case CMD_ADD:
-//              add(&stack);
+                add_stck(&stck);
                 break;
             case CMD_SUB:
+                sub_stck(&stck);
                 break;
             case CMD_DIV:
+                div_stck(&stck);
                 break;
             case CMD_MUL:
+                mul_stck(&stck);
                 break;
             default:
                 PRINT_ERROR;
@@ -125,5 +132,50 @@ ERROR run_bin(const int* const buffer, const int buf_size) {
         }
     }
 
+    return OK;
+}
+
+ERROR add_stck(stack_t* const stck) {
+    stck_el first;
+    stck_el second;
+    pop(stck, &second);
+    pop(stck, &first);
+    stck_el result = (stck_el)((int)first + (int)second);
+    push(stck, result);
+
+    return OK;
+}
+
+ERROR sub_stck(stack_t* const stck) {
+    stck_el first;
+    stck_el second;
+    pop(stck, &second);
+    pop(stck, &first);
+    stck_el result = first - second;
+    push(stck, result);
+
+    return OK;
+}
+
+ERROR div_stck(stack_t* const stck) {
+    stck_el first;
+    stck_el second;
+    pop(stck, &second);
+    pop(stck, &first);
+    stck_el result = first / second;
+    push(stck, result);
+    
+    return OK;
+}
+
+
+ERROR mul_stck(stack_t* const stck) {
+    stck_el first;
+    stck_el second;
+    pop(stck, &second);
+    pop(stck, &first);
+    stck_el result = first * second;
+    push(stck, result);
+    
     return OK;
 }

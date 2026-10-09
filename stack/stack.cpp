@@ -84,7 +84,7 @@ ERRORS_STCK stack_verificate(stack_t* stck, const char* file_name, const char* f
 // вывод ошибок в файл
 void stack_print_err(stack_t stck, ERRORS_STCK result)
 {
-    FILE* err = fopen("errors.txt", "a+");
+    FILE* err = fopen("../errors.txt", "a+");
 
     fprintf (err, "======================================\n");
     if (result == ERRORS_STCK_OK)
@@ -129,7 +129,7 @@ void stack_print_err(stack_t stck, ERRORS_STCK result)
 // создание стека
 ERRORS stack_init(stack_t* stck, size_t capacity)
 {
-    FILE* file = fopen("errors.txt", "w");
+    FILE* file = fopen("../errors.txt", "w");
     fclose(file);
 
     stck->canary_stck_start = STCK_CANARY_START;
@@ -140,9 +140,9 @@ ERRORS stack_init(stack_t* stck, size_t capacity)
     stck->canary_buf_start = (canary_t*)stck->buffer;
     *stck->canary_buf_start = BUF_CANARY_START;
     stck->buffer = (void*)(((canary_t*)stck->buffer) + 1);
-    fill_poison(stck, 0);
     stck->num_elems = 0;
     stck->capacity = capacity;
+    fill_poison(stck, 0);
     stck->canary_buf_end = (canary_t*)(((stck_el*)stck->buffer) + capacity);
     *stck->canary_buf_end = BUF_CANARY_END;
 
@@ -176,7 +176,7 @@ ERRORS pop(stack_t* stck, stck_el* out)
     
     if (stck->num_elems == 0) return ERRORS_EMPTY;
 
-    memcpy(out, &((stck_el*)stck->buffer)[stck->num_elems], sizeof(stck_el));
+    memcpy(out, &((stck_el*)stck->buffer)[stck->num_elems - 1], sizeof(stck_el));
     ((stck_el*)stck->buffer)[--stck->num_elems] = POISON;
     
     if ((stck->capacity > 1) && (stck->num_elems < (stck->capacity) / 2)) del_mem(stck);
@@ -238,7 +238,7 @@ ERRORS del_mem(stack_t* stck)
 // заполнение ядовитыми значениями
 ERRORS fill_poison(stack_t* stck, int start)
 {
-    //memset(&(((stck_el*)stck->buffer)[start]), POISON, stck->capacity - sizeof(stck_el) * (start - 1));
+    //memset(&(((stck_el*)stck->buffer)[start]), POISON, stck->capacity - sizeof(stck_el) * start);
 
     for (size_t i = start; i < stck->capacity; i++)
     {
