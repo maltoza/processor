@@ -162,11 +162,43 @@ ERROR run_bin(void) {
                 break;
             case CMD_PUSH:
                 // ложит в стек из регистра
-                push(proc.stack_data, (stck_el)(&proc.rax + proc.buffer[++proc.ip] - 1));
+                switch (proc.buffer[++proc.ip]) {
+                    case 1: 
+                        push(proc.stack_data, proc.rax);
+                        break;
+                    case 2:
+                        push(proc.stack_data, proc.rbx);
+                        break;
+                    case 3:
+                        push(proc.stack_data, proc.rcx);
+                        break;
+                    case 4:
+                        push(proc.stack_data, proc.rdx);
+                        break;
+                    default:
+                        // неопределенный регистр
+                        break;
+                }
                 break;
             case CMD_POP:
                 // извлекает в регистр из стека 
-                pop((stck_el*)(&proc.rax + proc.buffer[++proc.ip] - 1), proc.stack_data);
+                switch (proc.buffer[++proc.ip]) {
+                    case 1: 
+                        pop(&proc.rax, proc.stack_data);
+                        break;
+                    case 2:
+                        pop(&proc.rbx, proc.stack_data);
+                        break;
+                    case 3:
+                        pop(&proc.rcx, proc.stack_data);
+                        break;
+                    case 4:
+                        pop(&proc.rdx, proc.stack_data);
+                        break;
+                    default:
+                        // неопределенный регистр
+                        break;
+                }
                 break;
             case CMD_OUT:
                 printf("Result: %d\n", proc.rax);
