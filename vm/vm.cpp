@@ -156,11 +156,19 @@ ERROR run_bin(void) {
 
     while(proc.ip < proc.buf_size) {
         switch (proc.buffer[proc.ip]) {
-            case CMD_PUSH:
+            case CMD_PUSH_NUMBER:
+                // ложит в стек число
                 push(proc.stack_data, proc.buffer[++proc.ip]);
                 break;
+            case CMD_PUSH:
+                // ложит в стек из регистра
+                push(proc.stack_data, (stck_el)(&proc.rax + proc.buffer[++proc.ip] - 1));
+                break;
+            case CMD_POP:
+                // извлекает в регистр из стека 
+                pop((stck_el*)(&proc.rax + proc.buffer[++proc.ip] - 1), proc.stack_data);
+                break;
             case CMD_OUT:
-                pop(proc.stack_data, &proc.rax);
                 printf("Result: %d\n", proc.rax);
                 break;
             case CMD_HLT:
@@ -193,8 +201,8 @@ ERROR run_bin(void) {
 ERROR add_stck(stack_t* const stck) {
     stck_el first;
     stck_el second;
-    pop(stck, &second);
-    pop(stck, &first);
+    pop(&second, stck);
+    pop(&first, stck);
     stck_el result = (stck_el)((int)first + (int)second);
     push(stck, result);
 
@@ -204,8 +212,8 @@ ERROR add_stck(stack_t* const stck) {
 ERROR sub_stck(stack_t* const stck) {
     stck_el first;
     stck_el second;
-    pop(stck, &second);
-    pop(stck, &first);
+    pop(&second, stck);
+    pop(&first, stck);
     stck_el result = first - second;
     push(stck, result);
 
@@ -215,8 +223,8 @@ ERROR sub_stck(stack_t* const stck) {
 ERROR div_stck(stack_t* const stck) {
     stck_el first;
     stck_el second;
-    pop(stck, &second);
-    pop(stck, &first);
+    pop(&second, stck);
+    pop(&first, stck);
     stck_el result = first / second;
     push(stck, result);
     
@@ -227,8 +235,8 @@ ERROR div_stck(stack_t* const stck) {
 ERROR mul_stck(stack_t* const stck) {
     stck_el first;
     stck_el second;
-    pop(stck, &second);
-    pop(stck, &first);
+    pop(&second, stck);
+    pop(&first, stck);
     stck_el result = first * second;
     push(stck, result);
     

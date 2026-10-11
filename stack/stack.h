@@ -66,7 +66,7 @@ struct stack_t
 ERRORS stack_init(stack_t* const stck, const size_t capacity);
 void stack_close(stack_t* const stck);
 
-ERRORS pop(stack_t* const stck, stck_el* const out);
+ERRORS pop(stck_el* const out, stack_t* const stck);
 ERRORS push(stack_t* const stck, const stck_el elem);
 ERRORS check_memory(stack_t* const stck);
 ERRORS get_mem(stack_t* const stck);

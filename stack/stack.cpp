@@ -170,7 +170,7 @@ void stack_close(stack_t* const stck)
 
 
 // удаление элемента из стека
-ERRORS pop(stack_t* const stck, stck_el* const out)
+ERRORS pop(stck_el* const out, stack_t* const stck)
 {
     STCK_ASSERT(stck);
     

@@ -4,8 +4,9 @@
 // коды команд виртуальной машины
 enum CMD {
     CMD_ERROR = 0,
+    CMD_PUSH_NUMBER,
     CMD_PUSH,
-    CMD_PUSH_REG,
+    CMD_POP,
     CMD_OUT,
     CMD_HLT,
     CMD_ADD,
