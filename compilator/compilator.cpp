@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "code_bin.h"
 
@@ -27,8 +28,8 @@ enum ERROR {
 };
 
 
-ERROR read_asm(FILE* const file_asm, char* const cmd, int* const param, int* const flag);
-ERROR convert_cmd(char* const cmd_asm, int* const cmd_bin);
+ERROR read_asm(FILE* const file_asm, char* const cmd, char* const param, int* const flag);
+ERROR convert_cmd(char* const cmd_asm, char* const param_asm, int* const cmd_bin, int* const param_bin);
 ERROR write_bin(FILE* const file_bin, const int cmd_bin, const int param, const int flag);
 
 int main(int argc, char* argv[]) {
@@ -50,14 +51,15 @@ int main(int argc, char* argv[]) {
     } 
 
     char cmd_asm[CMD_LEN_MAX];
+    char param_asm[CMD_LEN_MAX];
     int cmd_bin = 0;
-    int param = 0;
+    int param_bin = 0;
     int flag = 0;
     while(1) {
-        read_asm(file_asm, cmd_asm, &param, &flag);
+        read_asm(file_asm, cmd_asm, param_asm, &flag);
         if (flag == EOF) break;
-        convert_cmd(cmd_asm, &cmd_bin);
-        write_bin(file_bin, cmd_bin, param, flag);
+        convert_cmd(cmd_asm, param_asm, &cmd_bin, &param_bin);
+        write_bin(file_bin, cmd_bin, param_bin, flag);
 
     }
 
@@ -65,23 +67,62 @@ int main(int argc, char* argv[]) {
 }
 
 
-ERROR read_asm(FILE* const file_asm, char* const cmd, int* const param, int* const flag) {
+ERROR read_asm(FILE* const file_asm, char* const cmd, char* const param, int* const flag) {
 
-    *flag = fscanf(file_asm, "%s %d\n", cmd, param);
-    if (*flag == EOF) return ERROR_FILE_END;
+    char line[CMD_LEN_MAX];
+    if (fgets(line, sizeof(line), file_asm) != 0) {
+        *flag = sscanf(line, "%s %s\n", cmd, param);
+    } else {
+        *flag = EOF;
+        return ERROR_FILE_END;
+    }
 
     return OK;
 }
 
 
-ERROR convert_cmd(char* const cmd_asm, int* const cmd_bin) {
-    if (!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH;
-    else if (!strcmp(cmd_asm, "OUT")) *cmd_bin = CMD_OUT;
-    else if (!strcmp(cmd_asm, "HLT")) *cmd_bin = CMD_HLT;
-    else if (!strcmp(cmd_asm, "ADD")) *cmd_bin = CMD_ADD;
-    else if (!strcmp(cmd_asm, "SUB")) *cmd_bin = CMD_SUB;
-    else if (!strcmp(cmd_asm, "DIV")) *cmd_bin = CMD_DIV;
-    else if (!strcmp(cmd_asm, "MUL")) *cmd_bin = CMD_MUL;
+ERROR convert_cmd(char* const cmd_asm, char* const param_asm,
+                  int*  const cmd_bin, int*  const param_bin) {
+    if (!strcmp(cmd_asm, "PUSH")) {
+        if ((param_asm[0] >= '0') && (param_asm[0] <= '9'))  {
+            // число
+            *cmd_bin = CMD_PUSH_NUMBER;
+            *param_bin = atoi(param_asm);
+        } else {
+            // регистр
+            *cmd_bin = CMD_PUSH;
+            *param_bin = toupper(param_asm[1]) - 'A' + 1;
+        }
+    }
+    else if (!strcmp(cmd_asm, "POP")) {
+        // регистр
+        *cmd_bin = CMD_POP;
+        *param_bin = toupper(param_asm[1]) - 'A' + 1;
+    }
+    else if (!strcmp(cmd_asm, "OUT")) {
+        *cmd_bin = CMD_OUT;
+        *param_bin = atoi(param_asm);
+    }
+    else if (!strcmp(cmd_asm, "HLT")) {
+        *cmd_bin = CMD_HLT;
+        *param_bin = atoi(param_asm);
+    }
+    else if (!strcmp(cmd_asm, "ADD")) {
+        *cmd_bin = CMD_ADD;
+        *param_bin = atoi(param_asm);
+    }
+    else if (!strcmp(cmd_asm, "SUB")) {
+        *cmd_bin = CMD_SUB;
+        *param_bin = atoi(param_asm);
+    }
+    else if (!strcmp(cmd_asm, "DIV")) {
+        *cmd_bin = CMD_DIV;
+        *param_bin = atoi(param_asm);
+    }
+    else if (!strcmp(cmd_asm, "MUL")) {
+        *cmd_bin = CMD_MUL;
+        *param_bin = atoi(param_asm);
+    }
     else {
         PRINT_ERROR;
         return ERROR_CMD_UNKNOWN;
