@@ -6,7 +6,13 @@
 #include "code_bin.h"
 
 #define PRINT_ERROR printf("%s:%d ERROR in function %s", __FILE__, __LINE__, __FUNCTION__)
-#define CMD_LEN_MAX 10
+#define CMD_LEN_MAX 10  // максимальная длина строки
+#define MAX_NUM_LAB 20  // максимальное количество меток
+
+struct label {
+    char name[CMD_LEN_MAX]; // имя метки
+    int ptr;                // адрес перехода
+};
 
 enum ERROR {
     OK = 0,
@@ -55,6 +61,10 @@ int main(int argc, char* argv[]) {
     int cmd_bin = 0;
     int param_bin = 0;
     int flag = 0;
+    label* lbs = (label*)calloc(sizeof(label), MAX_NUM_LAB);
+    // получение меток
+
+    //компиляция
     while(1) {
         read_asm(file_asm, cmd_asm, param_asm, &flag);
         if (flag == EOF) break;
@@ -66,6 +76,19 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
+ERROR read_labels(FILE* const file_asm, label(* lbs)[MAX_NUM_LAB]) {
+    int flag = 0;
+    char str[CMD_LEN_MAX];
+    while(flag != EOF) {
+        flag = scanf("%s\n", &str);
+        if (str[0] == ':') {
+            (*lbs)[0].name = str;
+
+        }
+        // запись метки в таблицу
+
+    }
+}
 
 ERROR read_asm(FILE* const file_asm, char* const cmd, char* const param, int* const flag) {
 
