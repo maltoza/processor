@@ -1,277 +1,270 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include "proc.h"
 
-#include "stack.h"
-#include "code_bin.h"
+#define LINE_LEN 20
 
-#define PRINT_ERROR printf("%s:%d ERROR in function %s", __FILE__, __LINE__, __FUNCTION__)
-#define NUM_ELEMS 100
-
-
-enum ERROR {
-    OK = 0,
-    ERROR_READ_TERM = 10,
-
-    // ошибки работы с файлом
-    ERROR_FILE_OPEN = 20,
-    ERROR_FILE_SCANF,
-
-    // ошибки работы с памятью
-    ERROR_MEM_ALLOC = 30,
-
-    // ошибки выполнения команд .bin
-    ERROR_CMD_UNKNOWN = 40, // команда не определена
-    ERROR_CMD_NO
-};
-
-// структура процессора
-struct processor {
-    // регистры общего назначения
-    int rax;    //
-    int rbx;    //
-    int rcx;    //
-    int rdx;    //
-
-    // регистры специального назначения
-    int ip;     // указатель на текущую команду
-
-    // буфер программы
-    int*   buffer;      // указатель на начало кода
-    size_t buf_size;    // размер массива
-
-    // стеки
-    stack_t* stack_data;  // стек данных
-};
-
-processor proc;
-
-ERROR proc_init(void);
-ERROR read_bin(const char* const file_name);
-ERROR run_bin (void);
-ERROR add_stck(stack_t* const stck);
-ERROR sub_stck(stack_t* const stck);
-ERROR div_stck(stack_t* const stck);
-ERROR mul_stck(stack_t* const stck);
+#define RETURN_ERROR(err_code) do {                                               \
+    printf("%s error (%d) %s:%d\n", __FILE__, err_code, __FUNCTION__,  __LINE__); \
+    return err_code;                                                              \
+} while (0)
 
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        PRINT_ERROR;
-        return ERROR_READ_TERM;
-    } 
-    
-    // инициализация процессора
-    ERROR result = proc_init();
-    if (result != OK) {
-        PRINT_ERROR;
-        return result;
-    } 
+static PROC_ERROR jmp(processor* proc);
+static PROC_ERROR ja(processor* proc);
+static PROC_ERROR call(processor* proc);
+static PROC_ERROR ret(processor* proc);
+static PROC_ERROR push_num(processor* proc);
+static PROC_ERROR push(processor* proc);
+static PROC_ERROR pop(processor* proc);
+static PROC_ERROR in(processor* proc);
+static PROC_ERROR out(processor* proc);
+static PROC_ERROR add(processor* proc);
+static PROC_ERROR sub(processor* proc);
+static PROC_ERROR mul(processor* proc);
+static PROC_ERROR div(processor* proc);
+static PROC_ERROR hlt(processor* proc);
 
-    // считать данные из .bin файла
-    result = read_bin(argv[1]);
-    if (result != OK) {
-        PRINT_ERROR;
-        return result;
-    } 
-
-    // работа программы
-    result = run_bin();
-    if (result != OK) {
-        PRINT_ERROR;
-        return result;
-    } 
-
-    return 0;
-}
+static PROC_ERROR (*(cmd[]))(processor* proc) =
+{jmp, ja, call, ret, push_num, push, pop, in, out, add, sub, mul, div, hlt};
 
 // инициализация процессора
-ERROR proc_init(void) {
-    // инициализация процессора
-    proc = {};
-
+PROC_ERROR proc_init(processor* proc) {
     // инициализация буфера программы
-    proc.buffer = (int*)calloc(NUM_ELEMS, sizeof(int));
-    if (proc.buffer == NULL) {
-        PRINT_ERROR;
-        //print();
-        return ERROR_MEM_ALLOC;
-    }
+    proc->buffer = (int*)calloc(PROC_NUM_ELEMS, sizeof(int));
+    if (proc->buffer == NULL) RETURN_ERROR(PROC_ERROR_MEM_ALLOC);
 
     // инициализация стека данных
-    proc.stack_data = (stack_t*)calloc(1, sizeof(stack_t));
-    stack_init(proc.stack_data, 1);
+    proc->stack_data = (stck_t*)calloc(1, sizeof(stck_t));
+    STCK_ERRORS res = stck_init(proc->stack_data, 1);
+    if(res != STCK_OK) RETURN_ERROR(PROC_ERROR_MEM_ALLOC);
+
+    proc->stck_calls = (stck_t*)calloc(1, sizeof(int));
+    res = stck_init(proc->stck_calls, 1);
+    if(res != STCK_OK) RETURN_ERROR(PROC_ERROR_MEM_ALLOC);
     
-    return OK;
+    return PROC_OK;
+}
+
+PROC_ERROR proc_destroy(processor* proc) {
+    stck_destroy(proc->stck_calls);
+    free(proc->stck_calls);
+    stck_destroy(proc->stack_data);
+    free(proc->stack_data);
+    free(proc->buffer);
+
+    return PROC_OK;
 }
 
 
-ERROR read_bin(const char* const file_name) {
+PROC_ERROR proc_load(processor* proc, const char* const file_name) {
     FILE* file = fopen(file_name, "r");
-    if (file == NULL) {
-        PRINT_ERROR;
-        return ERROR_FILE_OPEN;
-    } 
+    if (file == NULL) RETURN_ERROR(PROC_ERROR_FILE_OPEN);
 
     int cmd = 0;
     int param = 0;
     int flag = 0;
     int count = 0; // счётчик считанных данных
-    while((flag = fscanf(file, "%d %d\n", &cmd, &param)) != EOF) {
+    char ln[LINE_LEN] = {};
+    while((fgets(ln, LINE_LEN - 1, file))) {
+        flag = sscanf(ln, "%d %d\n", &cmd, &param);
         switch (flag) {
             case 1:
                 // команда без параметров
-                proc.buffer[count] = cmd;
-                proc.buf_size++;
+                proc->buffer[count] = cmd;
+                proc->buf_size++;
                 count++;
                 break;
             case 2:
                 // команда с 1 параметром
-                proc.buffer[count] = cmd;
+                proc->buffer[count] = cmd;
                 count++;
-                proc.buffer[count] = param;
+                proc->buffer[count] = param;
                 count++;
-                proc.buf_size += 2;
+                proc->buf_size += 2;
                 break;
             default:
-                PRINT_ERROR;
-                return ERROR_FILE_SCANF;
+                RETURN_ERROR(PROC_ERROR_FILE_SCANF);
                 break;
         }
     }
 
     // закрытие ресурсов
     fclose(file);
-    return OK;
+    return PROC_OK;
 }
 
 
 // выполнение программы
-ERROR run_bin(void) {
+PROC_ERROR proc_run(processor* proc) {
     // программа не загружена
-    if (proc.buf_size == 0) {
-        PRINT_ERROR;
-        return ERROR_CMD_NO;
-    }
+    if (proc->buf_size == 0) RETURN_ERROR(PROC_ERROR_CMD_NO);
 
-    proc.ip = 0; // указатель на текущую команду
+    proc->ip = 0; // указатель на текущую команду
 
-    while(proc.ip < proc.buf_size) {
-        switch (proc.buffer[proc.ip]) {
-            case CMD_PUSH_NUMBER:
-                // ложит в стек число
-                push(proc.stack_data, proc.buffer[++proc.ip]);
-                break;
-            case CMD_PUSH:
-                // ложит в стек из регистра
-                switch (proc.buffer[++proc.ip]) {
-                    case 1: 
-                        push(proc.stack_data, proc.rax);
-                        break;
-                    case 2:
-                        push(proc.stack_data, proc.rbx);
-                        break;
-                    case 3:
-                        push(proc.stack_data, proc.rcx);
-                        break;
-                    case 4:
-                        push(proc.stack_data, proc.rdx);
-                        break;
-                    default:
-                        // неопределенный регистр
-                        break;
-                }
-                break;
-            case CMD_POP:
-                // извлекает в регистр из стека 
-                switch (proc.buffer[++proc.ip]) {
-                    case 1: 
-                        pop(&proc.rax, proc.stack_data);
-                        break;
-                    case 2:
-                        pop(&proc.rbx, proc.stack_data);
-                        break;
-                    case 3:
-                        pop(&proc.rcx, proc.stack_data);
-                        break;
-                    case 4:
-                        pop(&proc.rdx, proc.stack_data);
-                        break;
-                    default:
-                        // неопределенный регистр
-                        break;
-                }
-                break;
-            case CMD_OUT:
-                printf("Result: %d\n", proc.rax);
-                break;
-            case CMD_HLT:
-                // завершение программы
-                return OK;
-                break;
-            case CMD_ADD:
-                add_stck(proc.stack_data);
-                break;
-            case CMD_SUB:
-                sub_stck(proc.stack_data);
-                break;
-            case CMD_DIV:
-                div_stck(proc.stack_data);
-                break;
-            case CMD_MUL:
-                mul_stck(proc.stack_data);
-                break;
-            default:
-                PRINT_ERROR;
-                return ERROR_CMD_UNKNOWN;
-                break;
+    while(proc->ip < proc->buf_size) {
+        PROC_ERROR res = cmd[proc->buffer[proc->ip]](proc);
+        if (res != PROC_OK) {
+            if (res == PROC_HLT) return res;
+            else RETURN_ERROR(res);
         }
-        proc.ip++;
     }
 
-    return OK;
+    return PROC_OK;
 }
 
-ERROR add_stck(stack_t* const stck) {
+// безусловный переход
+static PROC_ERROR jmp(processor* proc) {
+    int param = proc->buffer[proc->ip + 1];
+    proc->ip = param;
+    return PROC_OK;
+}
+
+
+static PROC_ERROR ja(processor* proc) {
+    int param;
+    int first_el, second_el;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &second_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+
+    if (first_el > second_el) {
+        param = proc->buffer[proc->ip + 1];
+        proc->ip = param;
+    } else {
+        proc->ip += 2;
+    }
+    
+    return PROC_OK;
+}
+
+
+static PROC_ERROR call(processor* proc) {
+    return PROC_OK;
+}
+
+
+static PROC_ERROR ret(processor* proc) {
+    return PROC_OK;
+}
+
+
+static PROC_ERROR push_num(processor* proc) {
+    int param = proc->buffer[proc->ip + 1];
+    STCK_ERRORS res = stck_push(proc->stack_data, param);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip += 2;
+    return PROC_OK;
+}
+
+
+static PROC_ERROR push(processor* proc) {
+    int param = proc->buffer[proc->ip + 1];
+    STCK_ERRORS res = stck_push(proc->stack_data, proc->r[param]);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip += 2;
+    return PROC_OK;
+}
+
+
+static PROC_ERROR pop(processor* proc) {
+    int param = proc->buffer[proc->ip + 1];
+    STCK_ERRORS res = stck_pop(proc->stack_data, &proc->r[param]);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip += 2;
+    return PROC_OK;
+}
+
+
+static PROC_ERROR in(processor* proc) {
+    int num;
+    printf("Enter the number: ");
+    int res1 = scanf("%d\n", &num);
+    if (res1 != 1) {
+        printf("Error, try again: ");
+        return PROC_OK;
+    } 
+    STCK_ERRORS res2 = stck_push(proc->stack_data, num);
+    if (res2 != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip++;
+
+    return PROC_OK;
+}
+
+
+static PROC_ERROR out(processor* proc) {
+    stck_el out;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &out);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    printf("Result: %d\n", out);
+    proc->ip++;
+
+    return PROC_OK;
+}
+
+
+PROC_ERROR add(processor* proc) {
+
     stck_el first;
     stck_el second;
-    pop(&second, stck);
-    pop(&first, stck);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &first);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     stck_el result = (stck_el)((int)first + (int)second);
-    push(stck, result);
+    res = stck_push(proc->stack_data, result);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip++;
 
-    return OK;
+    return PROC_OK;
 }
 
-ERROR sub_stck(stack_t* const stck) {
+PROC_ERROR sub(processor* proc) {
     stck_el first;
     stck_el second;
-    pop(&second, stck);
-    pop(&first, stck);
-    stck_el result = first - second;
-    push(stck, result);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &first);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    stck_el result = (stck_el)((int)first - (int)second);
+    res = stck_push(proc->stack_data, result);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip++;
 
-    return OK;
+    return PROC_OK;
 }
 
-ERROR div_stck(stack_t* const stck) {
+PROC_ERROR mul(processor* proc) {
     stck_el first;
     stck_el second;
-    pop(&second, stck);
-    pop(&first, stck);
-    stck_el result = first / second;
-    push(stck, result);
-    
-    return OK;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &first);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    stck_el result = (stck_el)((int)first * (int)second);
+    res = stck_push(proc->stack_data, result);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip++;
+
+    return PROC_OK;
 }
 
 
-ERROR mul_stck(stack_t* const stck) {
+PROC_ERROR div(processor* proc) {
     stck_el first;
     stck_el second;
-    pop(&second, stck);
-    pop(&first, stck);
-    stck_el result = first * second;
-    push(stck, result);
-    
-    return OK;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &first);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    stck_el result = (stck_el)((int)first / (int)second);
+    res = stck_push(proc->stack_data, result);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip++;
+
+    return PROC_OK;
+}
+
+
+static PROC_ERROR hlt(processor* proc) {
+    return PROC_HLT;
 }
