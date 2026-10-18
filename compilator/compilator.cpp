@@ -61,7 +61,12 @@ int main(int argc, char* argv[]) {
     int cmd_bin = 0;
     int param_bin = 0;
     int flag = 0;
+<<<<<<< HEAD
     //label* lbs = (label*)calloc(sizeof(label), MAX_NUM_LAB);
+=======
+    label* lbs = (label*)calloc(sizeof(label), MAX_NUM_LAB);
+    // получение меток
+>>>>>>> 4b6b61b231b5625b1ecbd491e07cd8ead5bc0684
 
     //компиляция
     while(1) {
@@ -83,12 +88,26 @@ ERROR read_labels(FILE* const file_asm, label(* lbs)[MAX_NUM_LAB]) {
         if (str[0] == ':') {
             (*lbs)[0].name = str;
 
+<<<<<<< HEAD
+=======
+ERROR read_labels(FILE* const file_asm, label(* lbs)[MAX_NUM_LAB]) {
+    int flag = 0;
+    char str[CMD_LEN_MAX];
+    while(flag != EOF) {
+        flag = scanf("%s\n", &str);
+        if (str[0] == ':') {
+            (*lbs)[0].name = str;
+
+>>>>>>> 4b6b61b231b5625b1ecbd491e07cd8ead5bc0684
         }
         // запись метки в таблицу
 
     }
 }
+<<<<<<< HEAD
 */
+=======
+>>>>>>> 4b6b61b231b5625b1ecbd491e07cd8ead5bc0684
 
 ERROR read_asm(FILE* const file_asm, char* const cmd, char* const param, int* const flag) {
 
