@@ -40,8 +40,8 @@ enum ERRORS_STCK
     ERRORS_STCK_NULLPTR,    // нулевой указатель на стек
     ERRORS_STCK_CAPACITY,   // ошибка размера стека
     ERRORS_STCK_NUMELEM,    // ошибка количества элементов
-    ERRORS_STRUCT_CANARY1,    // ошибка начальной канарейки стека
-    ERRORS_STRUCT_CANARY2     // ошибка конечной канарейки стека
+    ERRORS_STRUCT_CANARY1,  // ошибка начальной канарейки стека
+    ERRORS_STRUCT_CANARY2   // ошибка конечной канарейки стека
 };
 
 struct err_t

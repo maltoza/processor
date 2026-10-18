@@ -93,6 +93,7 @@ ERROR proc_init(void) {
     proc.buffer = (int*)calloc(NUM_ELEMS, sizeof(int));
     if (proc.buffer == NULL) {
         PRINT_ERROR;
+        //print();
         return ERROR_MEM_ALLOC;
     }
 
