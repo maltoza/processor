@@ -5,6 +5,11 @@
 enum CMD {
     CMD_JMP,
     CMD_JA,
+    CMD_JAE,
+    CMD_JB,
+    CMD_JBE,
+    CMD_JE,
+    CMD_JNE,
     CMD_CALL,
     CMD_RET,
     CMD_PUSH_NUMBER,

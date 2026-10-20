@@ -4,20 +4,16 @@
 #include <ctype.h>
 
 #include "../proc/code_bin.h"
+#include "labels.h"
 
 #define RETURN_ERROR(err_code) do {                                                   \
-    printf("%s CMPL_ERROR (%d) %s:%d\n", __FILE__, err_code, __FUNCTION__,  __LINE__); \
-    return err_code;                                                                    \
+    printf("%s ERROR (%d) %s:%d\n", __FILE__, err_code, __FUNCTION__,  __LINE__);     \
+    return err_code;                                                                  \
 } while (0)
 
 #define CMPL_LINE_LEN_MAX 10  // максимальная длина строки
 #define CMPL_WORD_LEN_MAX 10  // максимальная длина слова
-#define CMPL_MAX_NUM_LAB 20  // максимальное количество меток
-
-struct label {
-    char name[CMPL_WORD_LEN_MAX]; // имя метки
-    int ptr;                // адрес перехода
-};
+#define CMPL_MAX_NUM_LAB 20   // максимальное количество меток
 
 enum CMPL_ERROR {
     CMPL_OK = 0,
@@ -40,26 +36,25 @@ enum CMPL_ERROR {
 
 
 CMPL_ERROR read_asm(FILE* const file_asm, char* const cmd, char* const param, int* const flag);
-CMPL_ERROR convert_cmd(char* const cmd_asm, char* const param_asm, int* const cmd_bin, int* const param_bin);
+CMPL_ERROR convert_cmd(char* const cmd_asm, char* const param_asm, int* const cmd_bin, int* const param_bin, const label (*lbs)[CMPL_MAX_NUM_LAB], int* const flag);
+CMPL_ERROR compile_cmd(const char* const cmd_asm, int* const cmd_bin);
+CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_asm, int* const cmd_bin, int* const param_bin, const label (*lbs)[CMPL_MAX_NUM_LAB]);
 CMPL_ERROR write(FILE* const file_bin, const int cmd_bin, const int param, const int flag);
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         RETURN_ERROR(CMPL_ERROR_READ_TERM);
-        return CMPL_ERROR_READ_TERM;
     } 
 
     printf("Start compiling file %s", argv[0]);
     FILE* file_asm = fopen(argv[1], "r");
     if (file_asm == NULL) {
         RETURN_ERROR(CMPL_ERROR_FILE_OPEN);
-        return CMPL_ERROR_FILE_OPEN;
     } 
 
     FILE* file_bin = fopen(argv[2], "w");
     if (file_bin == NULL) {
         RETURN_ERROR(CMPL_ERROR_FILE_OPEN);
-        return CMPL_ERROR_FILE_OPEN;
     } 
 
     label lbs[CMPL_MAX_NUM_LAB];
@@ -78,7 +73,7 @@ int main(int argc, char* argv[]) {
             RETURN_ERROR(res);
         }
         if (flag == EOF) break;
-        res = convert_cmd(cmd_asm, param_asm, &cmd_bin, &param_bin);
+        res = convert_cmd(cmd_asm, param_asm, &cmd_bin, &param_bin, &lbs, &flag);
         if (res != CMPL_OK) {
             fclose(file_asm);
             fclose(file_bin);
@@ -113,17 +108,69 @@ CMPL_ERROR read_asm(FILE* const file_asm, char* const cmd, char* const param, in
 
 
 CMPL_ERROR convert_cmd(char* const cmd_asm, char* const param_asm,
-                  int*  const cmd_bin, int*  const param_bin,
-                  const label lbs[CMPL_MAX_NUM_LAB], int* const flag) {
-    if (find_label(cmd_asm, (const label (*)[20])lbs) < 0) {
+                  int*  const cmd_bin, int* const param_bin,
+                  const label (*lbs)[CMPL_MAX_NUM_LAB], int* const flag) {
+    if (find_labels_name((const label (* const)[LABEL_NUM_MAX])lbs, cmd_asm, NULL, NULL) != LABEL_MESS_FIND) {
         if (*flag == 1) compile_cmd(cmd_asm, cmd_bin);
-        else if (*flag == 2) compile_cmd_param(cmd_asm, param_asm, cmd_bin, param_bin);
+        else if (*flag == 2) compile_cmd_param(cmd_asm, param_asm, cmd_bin, param_bin, lbs);
         else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
     } else *flag = 0;
 
     return CMPL_OK;
 }
 
+// преобразование команды без параметра
+CMPL_ERROR compile_cmd(const char* const cmd_asm, int* const cmd_bin) {
+    if (!strcmp(cmd_asm, "ADD")) *cmd_bin = CMD_ADD;
+    else if(!strcmp(cmd_asm, "SUB")) *cmd_bin = CMD_SUB;
+    else if(!strcmp(cmd_asm, "MUL")) *cmd_bin = CMD_MUL;
+    else if(!strcmp(cmd_asm, "DIV")) *cmd_bin = CMD_DIV;
+    else if(!strcmp(cmd_asm, "IN")) *cmd_bin = CMD_IN;
+    else if(!strcmp(cmd_asm, "OUT")) *cmd_bin = CMD_OUT;
+    else if(!strcmp(cmd_asm, "RET")) *cmd_bin = CMD_RET;
+    else if(!strcmp(cmd_asm, "HLT")) *cmd_bin = CMD_HLT;
+    else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
+
+}
+
+// преобразование команды с параметром
+CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_asm,
+                             int* const cmd_bin, int* const param_bin, const label (*lbs)[CMPL_MAX_NUM_LAB]) {
+    if (cmd_asm[0] == 'J') {
+        // преобразование команды
+        if (!strcmp(cmd_asm, "JMP")) *cmd_bin = CMD_JMP;
+        else if (!strcmp(cmd_asm, "JA")) *cmd_bin = CMD_JA;
+        else if (!strcmp(cmd_asm, "JAE")) *cmd_bin = CMD_JAE;
+        else if (!strcmp(cmd_asm, "JB")) *cmd_bin = CMD_JB;
+        else if (!strcmp(cmd_asm, "JBE")) *cmd_bin = CMD_JBE;
+        else if (!strcmp(cmd_asm, "JE")) *cmd_bin = CMD_JE;
+        else if (!strcmp(cmd_asm, "JNE")) *cmd_bin = CMD_JNE;
+        else if (!strcmp(cmd_asm, "CALL")) *cmd_bin = CMD_CALL;  
+        else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
+        //преобразование параметра 
+        int lb_ptr;
+        int lb_id;
+        find_labels_name(lbs, cmd_asm, &lb_ptr, &lb_id);
+        *param_bin = lb_ptr;
+    } else {
+        if((*param_bin = atoi(param_asm)) != 0) {
+            if(!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH_NUMBER;
+            else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
+        } else {
+            if(!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH;
+            else if (!strcmp(cmd_asm, "POP")) *cmd_bin = CMD_POP;
+            else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
+
+            // преобразование регистра из строки в номер
+            *param_bin = toupper(param_asm[1]) - 'A' + 1;
+        } 
+
+    }
+
+    return CMPL_OK;
+}
+
+/*
 CMPL_ERROR get_labels()
 
 int find_label(char* const cmd_asm, const label  (* const lbs)[CMPL_MAX_NUM_LAB]) {
@@ -133,7 +180,7 @@ int find_label(char* const cmd_asm, const label  (* const lbs)[CMPL_MAX_NUM_LAB]
 
     return -1;
 }
-
+*/
 
 CMPL_ERROR write(FILE* const file_bin, const int cmd_bin, const int param, const int flag) {
     char ln[CMPL_LINE_LEN_MAX];

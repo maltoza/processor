@@ -10,6 +10,11 @@
 
 static PROC_ERROR jmp(processor* proc);
 static PROC_ERROR ja(processor* proc);
+static PROC_ERROR jae(processor* proc);
+static PROC_ERROR jb(processor* proc);
+static PROC_ERROR jbe(processor* proc);
+static PROC_ERROR je(processor* proc);
+static PROC_ERROR jne(processor* proc);
 static PROC_ERROR call(processor* proc);
 static PROC_ERROR ret(processor* proc);
 static PROC_ERROR push_num(processor* proc);
@@ -128,6 +133,101 @@ static PROC_ERROR ja(processor* proc) {
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
 
     if (first_el > second_el) {
+        param = proc->buffer[proc->ip + 1];
+        proc->ip = param;
+    } else {
+        proc->ip += 2;
+    }
+    
+    return PROC_OK;
+}
+
+
+static PROC_ERROR jae(processor* proc) {
+    int param;
+    int first_el, second_el;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &second_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+
+    if (first_el >= second_el) {
+        param = proc->buffer[proc->ip + 1];
+        proc->ip = param;
+    } else {
+        proc->ip += 2;
+    }
+    
+    return PROC_OK;
+}
+
+
+static PROC_ERROR jb(processor* proc) {
+    int param;
+    int first_el, second_el;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &second_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+
+    if (first_el < second_el) {
+        param = proc->buffer[proc->ip + 1];
+        proc->ip = param;
+    } else {
+        proc->ip += 2;
+    }
+    
+    return PROC_OK;
+}
+
+
+static PROC_ERROR jbe(processor* proc) {
+    int param;
+    int first_el, second_el;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &second_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+
+    if (first_el <= second_el) {
+        param = proc->buffer[proc->ip + 1];
+        proc->ip = param;
+    } else {
+        proc->ip += 2;
+    }
+    
+    return PROC_OK;
+}
+
+
+static PROC_ERROR je(processor* proc) {
+    int param;
+    int first_el, second_el;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &second_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+
+    if (first_el == second_el) {
+        param = proc->buffer[proc->ip + 1];
+        proc->ip = param;
+    } else {
+        proc->ip += 2;
+    }
+    
+    return PROC_OK;
+}
+
+
+static PROC_ERROR jne(processor* proc) {
+    int param;
+    int first_el, second_el;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    res = stck_pop(proc->stack_data, &second_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+
+    if (first_el != second_el) {
         param = proc->buffer[proc->ip + 1];
         proc->ip = param;
     } else {
