@@ -29,7 +29,7 @@ static PROC_ERROR div(processor* proc);
 static PROC_ERROR hlt(processor* proc);
 
 static PROC_ERROR (*(cmd[]))(processor* proc) =
-{jmp, ja, call, ret, push_num, push, pop, in, out, add, sub, mul, div, hlt};
+{jmp, ja, jae, jb, jbe, je, jne, call, ret, push_num, push, pop, in, out, add, sub, mul, div, hlt};
 
 // инициализация процессора
 PROC_ERROR proc_init(processor* proc) {

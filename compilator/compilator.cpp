@@ -155,12 +155,13 @@ CMPL_ERROR compile_cmd(const char* const cmd_asm, int* const cmd_bin) {
     else if(!strcmp(cmd_asm, "HLT")) *cmd_bin = CMD_HLT;
     else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
 
+    return CMPL_OK;
 }
 
 // преобразование команды с параметром
 CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_asm,
                              int* const cmd_bin, int* const param_bin, const label (*lbs)[CMPL_MAX_NUM_LAB]) {
-    if (cmd_asm[0] == 'J') {
+    if ((cmd_asm[0] == 'J') || (cmd_asm[0] == 'C')) {
         // преобразование команды
         if (!strcmp(cmd_asm, "JMP")) *cmd_bin = CMD_JMP;
         else if (!strcmp(cmd_asm, "JA")) *cmd_bin = CMD_JA;

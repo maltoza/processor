@@ -134,8 +134,8 @@ void stck_dump(const stck_t* const stck, const STCK_ERRORS result)
 STCK_ERRORS stck_init(stck_t* const stck, const size_t capacity)
 {
     stck->buffer = malloc(capacity * sizeof(stck_el) + 2 * sizeof(canary_t));
-    FILE* file = fopen(STCK_FILE_DUMP, "w");
-    fclose(file);
+    //FILE* file = fopen(STCK_FILE_DUMP, "w");
+    //fclose(file);
 
 
     stck->canary_stck_start = STCK_CANARY_START;
