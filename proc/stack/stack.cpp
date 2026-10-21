@@ -133,12 +133,15 @@ void stck_dump(const stck_t* const stck, const STCK_ERRORS result)
 // создание стека
 STCK_ERRORS stck_init(stck_t* const stck, const size_t capacity)
 {
+    stck->buffer = malloc(capacity * sizeof(stck_el) + 2 * sizeof(canary_t));
     FILE* file = fopen(STCK_FILE_DUMP, "w");
     fclose(file);
 
+
     stck->canary_stck_start = STCK_CANARY_START;
     stck->canary_stck_end = STCK_CANARY_END;
-    stck->buffer = malloc(capacity * sizeof(stck_el) + 2 * sizeof(canary_t));
+    stck->num_elems = 0;
+    stck->capacity = capacity;
     if (stck->buffer == NULL) {
         STCK_PRINT_ERROR(STCK_ERRORS_MEMALLOC);
         return STCK_ERRORS_MEMALLOC;
@@ -147,8 +150,6 @@ STCK_ERRORS stck_init(stck_t* const stck, const size_t capacity)
     stck->canary_buf_start = (canary_t*)stck->buffer;
     *stck->canary_buf_start = BUF_CANARY_START;
     stck->buffer = (void*)(((canary_t*)stck->buffer) + 1);
-    stck->num_elems = 0;
-    stck->capacity = capacity;
 
     STCK_ERRORS res = stck_fill_poison(stck, 0);
     if (res != STCK_OK) {
@@ -286,8 +287,6 @@ STCK_ERRORS stck_del_mem(stck_t* const stck)
 // заполнение ядовитыми значениями
 STCK_ERRORS stck_fill_poison(stck_t* const stck, const int start)
 {
-    //memset(&(((stck_el*)stck->buffer)[start]), POISON, stck->capacity - sizeof(stck_el) * (start - 1));
-
     for (size_t i = start; i < stck->capacity; i++)
     {
         ((stck_el*)stck->buffer)[i] = POISON;

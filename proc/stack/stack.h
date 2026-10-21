@@ -51,12 +51,12 @@ struct stck_err_t
 struct stck_t
 {
     canary_t          canary_stck_start;
-    stck_err_t             error;            // ошибки
+    stck_err_t             error;       // ошибки
+    size_t            num_elems;        // количество элементов в стеке
+    size_t            capacity;         // размер стека (кол-во ячеек)
     canary_t*         canary_buf_start; // указатель на начальную канарейку буфера
     void*             buffer;           // указатель на буфер
     canary_t*         canary_buf_end;   // указатель на конечную канарейку буфера
-    size_t            num_elems;        // количество элементов в стеке
-    size_t            capacity;         // размер стека (кол-во ячеек)
     canary_t          canary_stck_end;
 };
 

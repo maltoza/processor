@@ -7,7 +7,7 @@
 #include "labels.h"
 
 #define RETURN_ERROR(err_code) do {                                                   \
-    printf("%s ERROR (%d) %s:%d\n", __FILE__, err_code, __FUNCTION__,  __LINE__);     \
+    printf("%s:%d ERROR (%d) %s\n", __FILE__,  __LINE__, err_code, __FUNCTION__);     \
     return err_code;                                                                  \
 } while (0)
 
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         RETURN_ERROR(CMPL_ERROR_READ_TERM);
     } 
 
-    printf("Start compiling file %s", argv[0]);
+    printf("Start compiling file %s\n", argv[0]);
     FILE* file_asm = fopen(argv[1], "r");
     if (file_asm == NULL) {
         RETURN_ERROR(CMPL_ERROR_FILE_OPEN);
@@ -57,22 +57,46 @@ int main(int argc, char* argv[]) {
         RETURN_ERROR(CMPL_ERROR_FILE_OPEN);
     } 
 
-    label lbs[CMPL_MAX_NUM_LAB];
-    char cmd_asm[CMPL_WORD_LEN_MAX];
-    char param_asm[CMPL_WORD_LEN_MAX];
+    label lbs[CMPL_MAX_NUM_LAB] = {};
+    int lbs_count = 0;
+    char cmd_asm[CMPL_WORD_LEN_MAX] = {};
+    char param_asm[CMPL_WORD_LEN_MAX] = {};
     int cmd_bin = 0;
     int param_bin = 0;
     int flag = 0;
+    int line_ptr = 0;
 
-    //компиляция
+    // компиляция: заполнение массива меток
     while(1) {
         CMPL_ERROR res = read_asm(file_asm, cmd_asm, param_asm, &flag);
+        if (flag == EOF) break;
         if (res != CMPL_OK) {
             fclose(file_asm);
             fclose(file_bin);
             RETURN_ERROR(res);
         }
+        if (cmd_asm[strlen(cmd_asm) - 1] == ':') {
+            LABEL_MESS res = add_labels_name(&lbs, cmd_asm, &line_ptr, &lbs_count);
+            if (res != LABEL_MESS_OK) {
+                fclose(file_asm);
+                fclose(file_bin);
+                RETURN_ERROR(res);
+            }
+        }
+        else line_ptr += flag;
+    }
+    // переход на начало файла .asm
+    fseek(file_asm, 0, SEEK_SET);
+
+    // компиляция: преобразование команд
+    while(1) {
+        CMPL_ERROR res = read_asm(file_asm, cmd_asm, param_asm, &flag);
         if (flag == EOF) break;
+        if (res != CMPL_OK) {
+            fclose(file_asm);
+            fclose(file_bin);
+            RETURN_ERROR(res);
+        }
         res = convert_cmd(cmd_asm, param_asm, &cmd_bin, &param_bin, &lbs, &flag);
         if (res != CMPL_OK) {
             fclose(file_asm);
@@ -89,7 +113,7 @@ int main(int argc, char* argv[]) {
 
     fclose(file_asm);
     fclose(file_bin);
-    printf("file created %s", argv[2]);
+    printf("file created %s\n", argv[2]);
     return 0;
 }
 
@@ -150,7 +174,8 @@ CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_
         //преобразование параметра 
         int lb_ptr;
         int lb_id;
-        find_labels_name(lbs, cmd_asm, &lb_ptr, &lb_id);
+        LABEL_MESS res = find_labels_name(lbs, param_asm, &lb_ptr, &lb_id);
+        if (res != LABEL_MESS_FIND) RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
         *param_bin = lb_ptr;
     } else {
         if((*param_bin = atoi(param_asm)) != 0) {

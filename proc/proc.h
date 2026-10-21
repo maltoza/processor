@@ -42,7 +42,7 @@ struct processor {
 
     // стеки
     stck_t* stack_data;  // стек данных
-    stck_t* stck_calls;
+    stck_t* stack_call;  // стек вызовов
 };
 
 PROC_ERROR proc_init(processor* proc);

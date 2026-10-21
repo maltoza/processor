@@ -42,16 +42,17 @@ PROC_ERROR proc_init(processor* proc) {
     STCK_ERRORS res = stck_init(proc->stack_data, 1);
     if(res != STCK_OK) RETURN_ERROR(PROC_ERROR_MEM_ALLOC);
 
-    proc->stck_calls = (stck_t*)calloc(1, sizeof(int));
-    res = stck_init(proc->stck_calls, 1);
+    // инициализация стека вызовов
+    proc->stack_call = (stck_t*)calloc(1, sizeof(int));
+    res = stck_init(proc->stack_call, 1);
     if(res != STCK_OK) RETURN_ERROR(PROC_ERROR_MEM_ALLOC);
     
     return PROC_OK;
 }
 
 PROC_ERROR proc_destroy(processor* proc) {
-    stck_destroy(proc->stck_calls);
-    free(proc->stck_calls);
+    stck_destroy(proc->stack_call);
+    free(proc->stack_call);
     stck_destroy(proc->stack_data);
     free(proc->stack_data);
     free(proc->buffer);
@@ -239,11 +240,16 @@ static PROC_ERROR jne(processor* proc) {
 
 
 static PROC_ERROR call(processor* proc) {
+    stck_push(proc->stack_call, proc->ip + 2);
+    proc->ip = proc->buffer[proc->ip + 1];
+    
     return PROC_OK;
 }
 
 
 static PROC_ERROR ret(processor* proc) {
+    STCK_ERRORS res = stck_pop(proc->stack_call, &(proc->ip));
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     return PROC_OK;
 }
 
