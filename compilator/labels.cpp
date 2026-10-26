@@ -1,5 +1,10 @@
 #include "labels.h"
 
+#define RETURN_ERROR(err_code) do {                                               \
+    printf("%s ERROR (%d) %s:%d\n", __FILE__, err_code, __FUNCTION__,  __LINE__); \
+    return err_code;                                                              \
+} while (0)
+
 LABEL_MESS find_labels_name(const label (* const lbs)[LABEL_NUM_MAX], const char* const lb_name, int* const lb_ptr, int* const lb_id) {
     for (int i = 0; i < LABEL_NUM_MAX; i++) {
         if (!strcmp(lb_name, (*lbs)[i].name)) {

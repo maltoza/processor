@@ -245,11 +245,11 @@ STCK_ERRORS stck_get_mem(stck_t* const stck)
     }
     stck->canary_buf_start = (canary_t*)temp;
     *stck->canary_buf_start = BUF_CANARY_START;
-    stck->buffer = (stck_el*)((int*)temp + 1);
+    stck->buffer = (stck_el*)((canary_t*)temp + 1);
     stck->capacity = stck->capacity * 2;
-    stck->canary_buf_end = (canary_t*)((int*)stck->buffer + stck->capacity);
+    stck->canary_buf_end = (canary_t*)((stck_el*)stck->buffer + stck->capacity);
     *stck->canary_buf_end = BUF_CANARY_END;
-    STCK_ERRORS res = stck_fill_poison(stck, stck->num_elems);
+    STCK_ERRORS res = stck_fill_poison(stck, (int)stck->num_elems);
     if (res != STCK_OK) {
         STCK_PRINT_ERROR(res);
         return res;
@@ -269,9 +269,9 @@ STCK_ERRORS stck_del_mem(stck_t* const stck)
 
     stck->canary_buf_start = (canary_t*)temp;
     *stck->canary_buf_start = BUF_CANARY_START;
-    stck->buffer = (stck_el*)((int*)temp + 1);
+    stck->buffer = (stck_el*)((canary_t*)temp + 1);
     stck->capacity = stck->capacity / 2;
-    stck->canary_buf_end = (canary_t*)((int*)stck->buffer + stck->capacity);
+    stck->canary_buf_end = (canary_t*)((stck_el*)stck->buffer + stck->capacity);
     *stck->canary_buf_end = BUF_CANARY_END;
 
     STCK_ERRORS res = stck_fill_poison(stck, stck->num_elems);

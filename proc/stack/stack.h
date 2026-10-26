@@ -1,11 +1,11 @@
 #ifndef STACK_H
 #define STACK_H
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <assert.h>
 #include <string.h>
-#include <stdlib.h>
 
 #define POISON 63
 #define STCK_CANARY_START 123

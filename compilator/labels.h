@@ -7,10 +7,6 @@
 #define LABEL_LEN_MAX 10
 #define LABEL_NUM_MAX 20
 
-#define RETURN_ERROR(err_code) do {                                               \
-    printf("%s ERROR (%d) %s:%d\n", __FILE__, err_code, __FUNCTION__,  __LINE__); \
-    return err_code;                                                              \
-} while (0)
 
 enum LABEL_MESS {
     LABEL_MESS_OK = 0,

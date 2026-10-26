@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 
     // работа программы
     result = proc_run(&proc1);
-    if (result != PROC_OK) {
+    if (result != PROC_HLT && result != PROC_OK) {
         RETURN_ERROR(result);
     } 
 

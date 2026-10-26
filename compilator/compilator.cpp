@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         RETURN_ERROR(CMPL_ERROR_READ_TERM);
     } 
 
-    printf("Start compiling file %s\n", argv[0]);
+    printf("Start compiling file %s\n", argv[1]);
     FILE* file_asm = fopen(argv[1], "r");
     if (file_asm == NULL) {
         RETURN_ERROR(CMPL_ERROR_FILE_OPEN);
@@ -170,16 +170,20 @@ CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_
         else if (!strcmp(cmd_asm, "JBE")) *cmd_bin = CMD_JBE;
         else if (!strcmp(cmd_asm, "JE")) *cmd_bin = CMD_JE;
         else if (!strcmp(cmd_asm, "JNE")) *cmd_bin = CMD_JNE;
-        else if (!strcmp(cmd_asm, "CALL")) *cmd_bin = CMD_CALL;  
+        else if (!strcmp(cmd_asm, "CALL")) *cmd_bin = CMD_CALL;  // TODO массив 
         else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
         //преобразование параметра 
         int lb_ptr;
         int lb_id;
         LABEL_MESS res = find_labels_name(lbs, param_asm, &lb_ptr, &lb_id);
-        if (res != LABEL_MESS_FIND) RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
+        if (res != LABEL_MESS_FIND)  {
+            RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
+        }
         *param_bin = lb_ptr;
     } else {
-        if((*param_bin = atoi(param_asm)) != 0) {
+        char* l;
+        *param_bin = strtol(param_asm, &l, 10);
+        if(*l == '\0') {
             if(!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH_NUMBER;
             else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
         } else {
