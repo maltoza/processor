@@ -1,6 +1,0 @@
-CALL 1:
-HLT
-1:
-PUSH 20
-PUSH 30
-RET
