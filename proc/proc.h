@@ -8,7 +8,7 @@
 #include "./stack/stack.h"
 #include "code_bin.h"
 
-#define PROC_NUM_ELEMS 100
+#define PROC_NUM_ELEMS 300
 
 
 enum PROC_ERROR {

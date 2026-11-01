@@ -1,0 +1,157 @@
+    IN
+    POP RAX
+    IN
+    POP RBX
+    IN
+    POP RCX
+
+    PUSH RAX
+    PUSH RBX
+    PUSH RCX
+    PUSH RAX
+    PUSH RBX
+    PUSH RCX
+    CALL CHECK_COEF:
+    POP RCX
+    POP RBX
+    POP RAX 
+    
+    PUSH RAX
+    PUSH RBX
+    PUSH RCX
+    PUSH RAX
+    PUSH RBX
+    PUSH RCX
+    CALL DISCR:
+    POP RDX
+    POP RCX
+    POP RBX
+    POP RAX
+
+    PUSH RAX
+    PUSH RBX
+    PUSH RCX
+    PUSH RDX
+    PUSH RAX
+    PUSH RBX
+    PUSH RCX
+    PUSH RDX
+    CALL CHECK_DISCR:
+    POP RDX
+    POP RCX
+    POP RBX
+    POP RAX
+HLT
+
+CHECK_COEF:
+    POP RCX
+    POP RBX
+    POP RAX
+    PUSH 0
+    PUSH RAX
+    JNE EXIT:
+    PUSH 0
+    PUSH RBX
+    JNE EXIT:
+    PUSH 0
+    PUSH RCX
+    JNE CNOT0:
+    PRT 4
+    HLT
+    CNOT0:
+    PRT 0
+    HLT
+EXIT:
+RET
+
+
+DISCR:
+    PUSH RBX
+    PUSH RBX
+    MUL
+    PUSH 4
+    PUSH RAX
+    MUL
+    PUSH RCX
+    MUL
+    SUB
+RET
+
+CHECK_DISCR:
+    POP RDX
+    POP RCX
+    POP RBX
+    POP RAX
+    
+    PUSH 0
+    PUSH RDX
+    JB LB_TWOSOLUTIONS:
+    PUSH 0
+    PUSH RDX
+    JE LB_ONESOLUTION:
+    PRT 0
+    HLT
+
+    LB_TWOSOLUTIONS:
+    PUSH RAX
+    PUSH RBX
+    PUSH RDX
+    CALL TWOSOLUTIONS:
+    HLT
+    
+    LB_ONESOLUTION:
+    PUSH RAX
+    PUSH RBX
+    PUSH RDX
+    CALL ONESOLUTION:
+    HLT
+RET
+
+
+TWOSOLUTIONS:
+    POP RDX
+    POP RBX
+    POP RAX
+    PUSH -1
+    PUSH RBX
+    MUL
+    PUSH RDX
+    SQRT
+    SUB
+    PUSH 2
+    DIV
+    PUSH RAX
+    DIV
+    PRT 2
+    OUT
+    PUSH -1
+    PUSH RBX
+    MUL
+    PUSH RDX
+    SQRT
+    ADD
+    PUSH 2
+    DIV
+    PUSH RAX
+    DIV
+    PRT 3
+    OUT
+    HLT
+RET
+
+ONESOLUTION:
+    POP RDX
+    POP RBX
+    POP RAX
+    PUSH -1
+    PUSH RBX
+    MUL
+    PUSH 2
+    DIV
+    PUSH RAX
+    DIV
+    PRT 1
+    OUT
+    HLT
+RET
+

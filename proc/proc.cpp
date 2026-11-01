@@ -11,10 +11,9 @@
 enum PRT{
     PRT_ZEROSOL,
     PRT_ONESOL,
-    PRT_TWOSOL,
-    PRT_INFSOL,
     PRT_FIRSTSOL,
-    PRT_SECONDSOL
+    PRT_SECONDSOL,
+    PRT_INFSOL
 };
 
 static PROC_ERROR jmp(processor* proc);
@@ -138,14 +137,14 @@ static PROC_ERROR jmp(processor* proc) {
     return PROC_OK;
 }
 
-
+// first_el > second_el
 static PROC_ERROR ja(processor* proc) {
     int param;
     double first_el, second_el;
-    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
-    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    res = stck_pop(proc->stack_data, &second_el);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD); //TODO проверка что не джмп на выход
+    res = stck_pop(proc->stack_data, &first_el);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
 
     if (first_el > second_el) {
         param = proc->buffer[proc->ip + 1];
@@ -157,13 +156,13 @@ static PROC_ERROR ja(processor* proc) {
     return PROC_OK;
 }
 
-
+// first_el >= second_el
 static PROC_ERROR jae(processor* proc) {
     int param;
     double first_el, second_el;
-    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    res = stck_pop(proc->stack_data, &second_el);
+    res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
 
     if (first_el >= second_el) {
@@ -176,13 +175,13 @@ static PROC_ERROR jae(processor* proc) {
     return PROC_OK;
 }
 
-
+// first < second
 static PROC_ERROR jb(processor* proc) {
     int param;
     double first_el, second_el;
-    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    res = stck_pop(proc->stack_data, &second_el);
+    res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
 
     if (first_el < second_el) {
@@ -195,13 +194,13 @@ static PROC_ERROR jb(processor* proc) {
     return PROC_OK;
 }
 
-
+// first <= second
 static PROC_ERROR jbe(processor* proc) {
     int param;
     double first_el, second_el;
-    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    res = stck_pop(proc->stack_data, &second_el);
+    res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
 
     if (first_el <= second_el) {
@@ -214,13 +213,13 @@ static PROC_ERROR jbe(processor* proc) {
     return PROC_OK;
 }
 
-
+// first_el == second_el
 static PROC_ERROR je(processor* proc) {
     int param;
     double first_el, second_el;
-    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    res = stck_pop(proc->stack_data, &second_el);
+    res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
 
     if (first_el == second_el) {
@@ -233,13 +232,13 @@ static PROC_ERROR je(processor* proc) {
     return PROC_OK;
 }
 
-
+// first_el != second_el
 static PROC_ERROR jne(processor* proc) {
     int param;
     double first_el, second_el;
-    STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
+    STCK_ERRORS res = stck_pop(proc->stack_data, &second_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    res = stck_pop(proc->stack_data, &second_el);
+    res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
 
     if (first_el != second_el) {
@@ -265,6 +264,7 @@ static PROC_ERROR ret(processor* proc) {
     stck_el ip_n = (stck_el) proc->ip;
     STCK_ERRORS res = stck_pop(proc->stack_call, &ip_n);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip = ip_n;
     return PROC_OK;
 }
 
@@ -301,10 +301,11 @@ static PROC_ERROR in(processor* proc) {
     printf("Enter the number: ");
     char line[WORD_LEN] = {};
     if (fgets(line, sizeof(line), stdin) == 0) {
-        printf("Error, try again: ");
+        printf("Error, try again. ");
         return PROC_OK;
     }
-    int res1 = sscanf(line, "%.3g\n", &num);
+    int res1 = sscanf(line, "%lf\n", &num);
+    int k = (int) num;
     if (res1 != 1) {
         printf("Error, try again: ");
         return PROC_OK;
