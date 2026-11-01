@@ -17,9 +17,9 @@
 #define STCK_PRINT_ERROR(stck_err_code) printf("%s error (%d) %s:%d\n", __FILE__, stck_err_code, __FUNCTION__,  __LINE__)
 
 // тип элементов в стеке
-typedef int stck_el;
+typedef double stck_el;
 // тип канарейки
-typedef int canary_t;
+typedef double canary_t;
 
 
 // ошибки

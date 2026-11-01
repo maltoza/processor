@@ -21,6 +21,8 @@ enum CMD {
     CMD_SUB,
     CMD_MUL,
     CMD_DIV,
+    CMD_SQRT,
+    CMD_PRINT,
     CMD_HLT
 };
 

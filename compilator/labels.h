@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define LABEL_LEN_MAX 10
+#define LABEL_LEN_MAX 20
 #define LABEL_NUM_MAX 20
 
 

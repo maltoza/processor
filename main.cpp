@@ -4,7 +4,6 @@
 
 enum MAIN_ERROR {
     ERROR_ARG = 0,
-
 };
 
 int main(int argc, char* argv[]) {
@@ -15,7 +14,7 @@ int main(int argc, char* argv[]) {
     } 
     
     // инициализация процессора
-    PROC_ERROR result = proc_init(&proc1);
+    PROC_ERROR result = proc_ctor(&proc1);
     if (result != PROC_OK) {
         RETURN_ERROR(result);
     } 

@@ -8,6 +8,14 @@
     return err_code;                                                              \
 } while (0)
 
+enum PRT{
+    PRT_ZEROSOL,
+    PRT_ONESOL,
+    PRT_TWOSOL,
+    PRT_INFSOL,
+    PRT_FIRSTSOL,
+    PRT_SECONDSOL
+};
 
 static PROC_ERROR jmp(processor* proc);
 static PROC_ERROR ja(processor* proc);
@@ -27,13 +35,16 @@ static PROC_ERROR add(processor* proc);
 static PROC_ERROR sub(processor* proc);
 static PROC_ERROR mul(processor* proc);
 static PROC_ERROR div(processor* proc);
+static PROC_ERROR sqRT(processor* proc);
+static PROC_ERROR prt(processor* proc);
 static PROC_ERROR hlt(processor* proc);
 
 static PROC_ERROR (*(cmd[]))(processor* proc) =
-{jmp, ja, jae, jb, jbe, je, jne, call, ret, push_num, push, pop, in, out, add, sub, mul, div, hlt};
+{jmp, ja, jae, jb, jbe, je, jne, call, ret, push_num, push, pop, in, out, add, sub, mul, div, sqRT, prt, hlt};
+
 
 // инициализация процессора
-PROC_ERROR proc_init(processor* proc) {
+PROC_ERROR proc_ctor(processor* proc) {
     // инициализация буфера программы
     proc->buffer = (int*)calloc(PROC_NUM_ELEMS, sizeof(int));
     if (proc->buffer == NULL) RETURN_ERROR(PROC_ERROR_MEM_ALLOC);
@@ -50,8 +61,9 @@ PROC_ERROR proc_init(processor* proc) {
     
     return PROC_OK;
 }
-//ctor dtor
-PROC_ERROR proc_destroy(processor* proc) {
+
+
+PROC_ERROR proc_dtor(processor* proc) {
     stck_destroy(proc->stack_call);
     free(proc->stack_call);
     stck_destroy(proc->stack_data);
@@ -129,7 +141,7 @@ static PROC_ERROR jmp(processor* proc) {
 
 static PROC_ERROR ja(processor* proc) {
     int param;
-    int first_el, second_el;
+    double first_el, second_el;
     STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &second_el);
@@ -148,7 +160,7 @@ static PROC_ERROR ja(processor* proc) {
 
 static PROC_ERROR jae(processor* proc) {
     int param;
-    int first_el, second_el;
+    double first_el, second_el;
     STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &second_el);
@@ -167,7 +179,7 @@ static PROC_ERROR jae(processor* proc) {
 
 static PROC_ERROR jb(processor* proc) {
     int param;
-    int first_el, second_el;
+    double first_el, second_el;
     STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &second_el);
@@ -186,7 +198,7 @@ static PROC_ERROR jb(processor* proc) {
 
 static PROC_ERROR jbe(processor* proc) {
     int param;
-    int first_el, second_el;
+    double first_el, second_el;
     STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &second_el);
@@ -205,7 +217,7 @@ static PROC_ERROR jbe(processor* proc) {
 
 static PROC_ERROR je(processor* proc) {
     int param;
-    int first_el, second_el;
+    double first_el, second_el;
     STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &second_el);
@@ -224,7 +236,7 @@ static PROC_ERROR je(processor* proc) {
 
 static PROC_ERROR jne(processor* proc) {
     int param;
-    int first_el, second_el;
+    double first_el, second_el;
     STCK_ERRORS res = stck_pop(proc->stack_data, &first_el);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &second_el);
@@ -250,14 +262,15 @@ static PROC_ERROR call(processor* proc) {
 
 
 static PROC_ERROR ret(processor* proc) {
-    STCK_ERRORS res = stck_pop(proc->stack_call, &(proc->ip));
+    stck_el ip_n = (stck_el) proc->ip;
+    STCK_ERRORS res = stck_pop(proc->stack_call, &ip_n);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     return PROC_OK;
 }
 
 
 static PROC_ERROR push_num(processor* proc) {
-    int param = proc->buffer[proc->ip + 1];
+    double param = proc->buffer[proc->ip + 1];
     STCK_ERRORS res = stck_push(proc->stack_data, param);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     proc->ip += 2;
@@ -284,14 +297,14 @@ static PROC_ERROR pop(processor* proc) {
 
 
 static PROC_ERROR in(processor* proc) {
-    int num;
+    double num;
     printf("Enter the number: ");
     char line[WORD_LEN] = {};
     if (fgets(line, sizeof(line), stdin) == 0) {
         printf("Error, try again: ");
         return PROC_OK;
     }
-    int res1 = sscanf(line, "%d\n", &num);
+    int res1 = sscanf(line, "%.3g\n", &num);
     if (res1 != 1) {
         printf("Error, try again: ");
         return PROC_OK;
@@ -308,7 +321,7 @@ static PROC_ERROR out(processor* proc) {
     stck_el out;
     STCK_ERRORS res = stck_pop(proc->stack_data, &out);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    printf("Result: %d\n", out);
+    printf("%.3g\n", out);
     proc->ip++;
 
     return PROC_OK;
@@ -331,6 +344,7 @@ PROC_ERROR add(processor* proc) {
     return PROC_OK;
 }
 
+
 PROC_ERROR sub(processor* proc) {
     stck_el first;
     stck_el second;
@@ -346,6 +360,7 @@ PROC_ERROR sub(processor* proc) {
     return PROC_OK;
 }
 
+
 PROC_ERROR mul(processor* proc) {
     stck_el first;
     stck_el second;
@@ -353,7 +368,7 @@ PROC_ERROR mul(processor* proc) {
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &first);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    stck_el result = (stck_el)((int)first * (int)second);
+    stck_el result = (stck_el)((double)first * (double)second);
     res = stck_push(proc->stack_data, result);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     proc->ip++;
@@ -369,12 +384,50 @@ PROC_ERROR div(processor* proc) {
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     res = stck_pop(proc->stack_data, &first);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
-    stck_el result = (stck_el)((int)first / (int)second);
+    stck_el result = (stck_el)((double)first / (double)second);
     res = stck_push(proc->stack_data, result);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     proc->ip++;
 
     return PROC_OK;
+}
+
+// корень из числа
+static PROC_ERROR sqRT(processor* proc) {
+    stck_el elem;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &elem);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    stck_el result = sqrt(elem);
+    res = stck_push(proc->stack_data, result);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip++;
+
+    return PROC_OK;
+}
+
+// вывод строки
+static PROC_ERROR prt(processor* proc) {
+    int param = proc->buffer[proc->ip + 1];
+    switch(param) {
+        case PRT_ZEROSOL:
+            printf("No solutions\n");
+            break;
+        case PRT_ONESOL:
+            printf("One solution: ");
+            break;
+        case PRT_FIRSTSOL:
+            printf("First solution: ");
+            break;
+        case PRT_SECONDSOL:
+            printf("Second solution: ");
+            break;
+        case PRT_INFSOL:
+            printf("Infinity number of solutions\n");
+    }
+    proc->ip+=2;
+
+    return PROC_OK;
+
 }
 
 

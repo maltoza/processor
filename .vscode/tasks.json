@@ -1,0 +1,63 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "(g++) построение compilator.cpp",
+            "type": "shell",
+            "command": "g++.exe",
+            "args": [
+                "-g",// компиляция с отладочной информацией
+                "${workspaceFolder}/compilator/compilator.cpp",
+                "${workspaceFolder}/compilator/labels.cpp",
+                "-I.${workspaceFolder}/proc",
+                "-o",
+                "${workspaceFolder}/compilator/compilator.exe"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "(g++) построение main.cpp",
+            "type": "shell",
+            "command": "g++.exe",
+            "args": [
+                "-g",// компиляция с отладочной информацией
+                "${workspaceFolder}/main.cpp",
+                "./proc/proc.cpp",
+                "./proc/stack/stack.cpp",
+                "-I./proc",
+                "-I./proc/stack",
+                "-o",
+                "${workspaceFolder}/main.exe"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "(g++) построение decompilator.cpp",
+            "type": "shell",
+            "command": "g++.exe",
+            "args": [
+                "-g",// компиляция с отладочной информацией
+                //входной файл
+                "${workspaceFolder}/decompilator/decompilator.cpp",
+                // выходной файл
+                "-o",
+                "${workspaceFolder}/decompilator/decompilator.exe"
+            ],
+            "group": "build",
+            "presentation": {
+                // Reveal the output only if unrecognized errors occur.
+                "reveal": "silent"
+            },
+            // Использовать gcc для обработки ошибок, предупреждений, информации
+            "problemMatcher": "$gcc"
+        }
+    ]
+}

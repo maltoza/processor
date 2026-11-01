@@ -11,8 +11,8 @@
     return err_code;                                                                  \
 } while (0)
 
-#define CMPL_LINE_LEN_MAX 10  // максимальная длина строки
-#define CMPL_WORD_LEN_MAX 10  // максимальная длина слова
+#define CMPL_LINE_LEN_MAX 60  // максимальная длина строки
+#define CMPL_WORD_LEN_MAX 20  // максимальная длина слова
 #define CMPL_MAX_NUM_LAB 20   // максимальное количество меток
 
 enum CMPL_ERROR {
@@ -75,15 +75,17 @@ int main(int argc, char* argv[]) {
             fclose(file_bin);
             RETURN_ERROR(res);
         }
-        if (cmd_asm[strlen(cmd_asm) - 1] == ':') {
-            LABEL_MESS res = add_labels_name(&lbs, cmd_asm, &line_ptr, &lbs_count);
-            if (res != LABEL_MESS_OK) {
-                fclose(file_asm);
-                fclose(file_bin);
-                RETURN_ERROR(res);
+        if (flag != 0) {
+            if (cmd_asm[strlen(cmd_asm) - 1] == ':') {
+                LABEL_MESS res = add_labels_name(&lbs, cmd_asm, &line_ptr, &lbs_count);
+                if (res != LABEL_MESS_OK) {
+                    fclose(file_asm);
+                    fclose(file_bin);
+                    RETURN_ERROR(res);
+                }
             }
+            else line_ptr += flag;
         }
-        else line_ptr += flag;
     }
     // переход на начало файла .asm
     fseek(file_asm, 0, SEEK_SET);
@@ -97,17 +99,19 @@ int main(int argc, char* argv[]) {
             fclose(file_bin);
             RETURN_ERROR(res);
         }
-        res = convert_cmd(cmd_asm, param_asm, &cmd_bin, &param_bin, &lbs, &flag);
-        if (res != CMPL_OK) {
-            fclose(file_asm);
-            fclose(file_bin);
-            RETURN_ERROR(res);
-        }
-        res = write(file_bin, cmd_bin, param_bin, flag);
-        if (res != CMPL_OK) {
-            fclose(file_asm);
-            fclose(file_bin);
-            RETURN_ERROR(res);
+        if (flag != 0) {
+            res = convert_cmd(cmd_asm, param_asm, &cmd_bin, &param_bin, &lbs, &flag);
+            if (res != CMPL_OK) {
+                fclose(file_asm);
+                fclose(file_bin);
+                RETURN_ERROR(res);
+            }
+            res = write(file_bin, cmd_bin, param_bin, flag);
+            if (res != CMPL_OK) {
+                fclose(file_asm);
+                fclose(file_bin);
+                RETURN_ERROR(res);
+            }
         }
     }
 
@@ -120,8 +124,11 @@ int main(int argc, char* argv[]) {
 CMPL_ERROR read_asm(FILE* const file_asm, char* const cmd, char* const param, int* const flag) {
 
     char line[CMPL_LINE_LEN_MAX];
-    if (fgets(line, sizeof(line), file_asm) != 0) {
-        *flag = sscanf(line, "%s %s\n", cmd, param);
+    if (fgets(line, sizeof(line), file_asm) != NULL) {
+        int res = sscanf(line, "%s %s\n", cmd, param);
+        if (res > 0) *flag = res;
+        else *flag = 0;
+        
     } else {
         *flag = EOF;
         return CMPL_ERROR_FILE_END;
@@ -153,6 +160,7 @@ CMPL_ERROR compile_cmd(const char* const cmd_asm, int* const cmd_bin) {
     else if(!strcmp(cmd_asm, "OUT")) *cmd_bin = CMD_OUT;
     else if(!strcmp(cmd_asm, "RET")) *cmd_bin = CMD_RET;
     else if(!strcmp(cmd_asm, "HLT")) *cmd_bin = CMD_HLT;
+    else if(!strcmp(cmd_asm, "SQRT")) *cmd_bin = CMD_SQRT;
     else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
 
     return CMPL_OK;
@@ -170,7 +178,7 @@ CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_
         else if (!strcmp(cmd_asm, "JBE")) *cmd_bin = CMD_JBE;
         else if (!strcmp(cmd_asm, "JE")) *cmd_bin = CMD_JE;
         else if (!strcmp(cmd_asm, "JNE")) *cmd_bin = CMD_JNE;
-        else if (!strcmp(cmd_asm, "CALL")) *cmd_bin = CMD_CALL;  // TODO массив 
+        else if (!strcmp(cmd_asm, "CALL")) *cmd_bin = CMD_CALL;
         else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
         //преобразование параметра 
         int lb_ptr;
@@ -183,14 +191,17 @@ CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_
     } else {
         char* l;
         *param_bin = strtol(param_asm, &l, 10);
-        if(*l == '\0') {
+        if(*l == '\0') { 
+            // число
             if(!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH_NUMBER;
+            else if (!strcmp(cmd_asm, "PRT")) *cmd_bin = CMD_PRINT;
             else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
         } else {
+            // регистр
             if(!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH;
             else if (!strcmp(cmd_asm, "POP")) *cmd_bin = CMD_POP;
             else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
-
+            
             // преобразование регистра из строки в номер
             *param_bin = toupper(param_asm[1]) - 'A' + 1;
         } 
@@ -200,17 +211,7 @@ CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_
     return CMPL_OK;
 }
 
-/*
-CMPL_ERROR get_labels()
 
-int find_label(char* const cmd_asm, const label  (* const lbs)[CMPL_MAX_NUM_LAB]) {
-    for (int i = 0; i < CMPL_MAX_NUM_LAB; i++) {
-        if (!strcmp(cmd_asm, (*lbs)[i].name)) return i;
-    }
-
-    return -1;
-}
-*/
 
 CMPL_ERROR write(FILE* const file_bin, const int cmd_bin, const int param, const int flag) {
     char ln[CMPL_LINE_LEN_MAX];

@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "./stack/stack.h"
 #include "code_bin.h"
@@ -31,7 +32,7 @@ enum PROC_ERROR {
 // структура процессора
 struct processor {
     // регистры общего назначения
-    int r[5];
+    double r[5];
 
     // регистры специального назначения
     int ip;     // указатель на текущую команду
@@ -45,8 +46,8 @@ struct processor {
     stck_t* stack_call;  // стек вызовов
 };
 
-PROC_ERROR proc_init(processor* proc);
-PROC_ERROR proc_destroy(processor* proc);
+PROC_ERROR proc_ctor(processor* proc);
+PROC_ERROR proc_dtor(processor* proc);
 PROC_ERROR proc_load(processor* proc, const char* const file_name);
 PROC_ERROR proc_run(processor* proc);
 
