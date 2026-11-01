@@ -27,7 +27,9 @@ static PROC_ERROR call(processor* proc);
 static PROC_ERROR ret(processor* proc);
 static PROC_ERROR push_num(processor* proc);
 static PROC_ERROR push(processor* proc);
+static PROC_ERROR push_m(processor* proc);
 static PROC_ERROR pop(processor* proc);
+static PROC_ERROR pop_m(processor* proc);
 static PROC_ERROR in(processor* proc);
 static PROC_ERROR out(processor* proc);
 static PROC_ERROR add(processor* proc);
@@ -36,11 +38,12 @@ static PROC_ERROR mul(processor* proc);
 static PROC_ERROR div(processor* proc);
 static PROC_ERROR sqRT(processor* proc);
 static PROC_ERROR prt(processor* proc);
+static PROC_ERROR draw(processor* proc);
 static PROC_ERROR hlt(processor* proc);
 
 static PROC_ERROR (*(cmd[]))(processor* proc) =
-{jmp, ja, jae, jb, jbe, je, jne, call, ret, push_num, push, pop, in, out, add, sub, mul, div, sqRT, prt, hlt};
-
+{jmp, ja, jae, jb, jbe, je, jne, call, ret, push_num, push, push_m, pop, pop_m, in, out, add, sub, mul, div, sqRT, prt, draw, hlt};
+ 
 
 // инициализация процессора
 PROC_ERROR proc_ctor(processor* proc) {
@@ -57,12 +60,22 @@ PROC_ERROR proc_ctor(processor* proc) {
     proc->stack_call = (stck_t*)calloc(1, sizeof(stck_t));
     res = stck_init(proc->stack_call, 1);
     if(res != STCK_OK) RETURN_ERROR(PROC_ERROR_MEM_ALLOC);
+
+    // инициализация видеопамяти
+    proc->vmem = (char*) calloc(VID_H * VID_V, sizeof(char));
+
+    for (int j = 0; j < VID_V; j++) {
+        for (int i = 0; i < VID_H; i++) {
+            proc->vmem[j * VID_H + i] = '0';
+        }
+    }
     
     return PROC_OK;
 }
 
 
 PROC_ERROR proc_dtor(processor* proc) {
+    free(proc->vmem);
     stck_destroy(proc->stack_call);
     free(proc->stack_call);
     stck_destroy(proc->stack_data);
@@ -432,6 +445,45 @@ static PROC_ERROR prt(processor* proc) {
 }
 
 
+// вывод видеопамяти
+static PROC_ERROR draw(processor* proc) {
+    printf("\n");
+    for (int j = 0; j < VID_V; j++) {
+        for (int i = 0; i < VID_H; i++) {
+            printf("%c", proc->vmem[j * VID_H + i]);
+        }
+        printf("\n");
+    }
+    proc->ip++;
+
+    return PROC_OK;
+}
+
+
+static PROC_ERROR push_m(processor*proc) {
+    int param = proc->buffer[proc->ip + 1];
+    STCK_ERRORS res = stck_push(proc->stack_data, proc->vmem[param]);
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip += 2;
+
+    return PROC_OK;
+}
+
+
+static PROC_ERROR pop_m(processor* proc) {
+    int param = proc->buffer[proc->ip + 1];
+    char* vmem_location = proc->vmem + param;
+    double a;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &a);
+    *vmem_location = (char) a;
+    if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
+    proc->ip += 2;
+    return PROC_OK;
+}
+
+
 static PROC_ERROR hlt(processor* proc) {
     return PROC_HLT;
 }
+
+

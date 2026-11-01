@@ -184,7 +184,7 @@ void stck_destroy(stck_t* const stck)
 
 
 
-// удаление элемента из стека
+// извлечение элемента из стека
 STCK_ERRORS stck_pop(stck_t* const stck, stck_el* const out)
 {
     STCK_ASSERT(stck);

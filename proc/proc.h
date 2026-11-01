@@ -9,7 +9,8 @@
 #include "code_bin.h"
 
 #define PROC_NUM_ELEMS 300
-
+#define VID_H 80
+#define VID_V 30
 
 enum PROC_ERROR {
     PROC_OK = 0,
@@ -44,6 +45,8 @@ struct processor {
     // стеки
     stck_t* stack_data;  // стек данных
     stck_t* stack_call;  // стек вызовов
+
+    char* vmem; // видео память
 };
 
 PROC_ERROR proc_ctor(processor* proc);

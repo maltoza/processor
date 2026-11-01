@@ -14,7 +14,9 @@ enum CMD {
     CMD_RET,
     CMD_PUSH_NUMBER,
     CMD_PUSH,
+    CMD_PUSHM,
     CMD_POP,
+    CMD_POPM,
     CMD_IN,
     CMD_OUT,
     CMD_ADD,
@@ -23,6 +25,7 @@ enum CMD {
     CMD_DIV,
     CMD_SQRT,
     CMD_PRINT,
+    CMD_DRAW,
     CMD_HLT
 };
 
