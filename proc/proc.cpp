@@ -462,7 +462,9 @@ static PROC_ERROR draw(processor* proc) {
 
 static PROC_ERROR push_m(processor*proc) {
     int param = proc->buffer[proc->ip + 1];
-    STCK_ERRORS res = stck_push(proc->stack_data, proc->vmem[param]);
+    int adr = proc->r[param];
+    char* vmem_location = proc->vmem + adr;
+    STCK_ERRORS res = stck_push(proc->stack_data, *vmem_location);
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     proc->ip += 2;
 
@@ -472,12 +474,14 @@ static PROC_ERROR push_m(processor*proc) {
 
 static PROC_ERROR pop_m(processor* proc) {
     int param = proc->buffer[proc->ip + 1];
-    char* vmem_location = proc->vmem + param;
-    double a;
-    STCK_ERRORS res = stck_pop(proc->stack_data, &a);
-    *vmem_location = (char) a;
+    int adr = proc->r[param];
+    char* vmem_location = proc->vmem + adr;
+    double value;
+    STCK_ERRORS res = stck_pop(proc->stack_data, &value);
+    *vmem_location = (char) value;
     if (res != STCK_OK) RETURN_ERROR(PROC_ERROR_CMD);
     proc->ip += 2;
+
     return PROC_OK;
 }
 

@@ -11,7 +11,7 @@
             "preLaunchTask": "(g++) построение compilator.cpp",
             "program": "${workspaceFolder}/compilator/compilator.exe",
             "args": [
-                "./tests_asm/code.asm",
+                "./tests_asm/circle.asm",
                 "code.bin"
             ],
             "stopAtEntry": false,

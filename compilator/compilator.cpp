@@ -195,14 +195,14 @@ CMPL_ERROR compile_cmd_param(const char* const cmd_asm, const char* const param_
         if(*l == '\0') { 
             // число
             if(!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH_NUMBER;
-            else if (!strcmp(cmd_asm, "PUSHM")) *cmd_bin = CMD_PUSHM;
-            else if (!strcmp(cmd_asm, "POPM")) *cmd_bin = CMD_POPM;
             else if (!strcmp(cmd_asm, "PRT")) *cmd_bin = CMD_PRINT;
             else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
         } else {
             // регистр
             if(!strcmp(cmd_asm, "PUSH")) *cmd_bin = CMD_PUSH;
+            else if (!strcmp(cmd_asm, "PUSHM")) *cmd_bin = CMD_PUSHM;
             else if (!strcmp(cmd_asm, "POP")) *cmd_bin = CMD_POP;
+            else if (!strcmp(cmd_asm, "POPM")) *cmd_bin = CMD_POPM;
             else RETURN_ERROR(CMPL_ERROR_CMD_UNKNOWN);
             
             // преобразование регистра из строки в номер
